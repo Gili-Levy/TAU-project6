@@ -172,7 +172,7 @@ def CYK_d(st, rule_dict, start_var):
 	#Initialize the relevant triangular region with empty sets
 	for i in range(n):
 		for j in range(i+1,n+1):
-			table[i][j] = set()
+			table[i][j] = [set(), "none"]
 
 	# Fill the table cells representing substrings of length 1
 	fill_length_1_cells_d(table, rule_dict, st)
@@ -183,10 +183,10 @@ def CYK_d(st, rule_dict, start_var):
 			j = i+length
 			fill_cell_d(table, i,j, rule_dict)
 			
-	if start_var in table[0][n] == False:
+	if (start_var in table[0][n][0]) == False:
 		return -1
 	else:
-		return min_depth
+		return table[0][n][1]
 
 def fill_length_1_cells_d(table, rule_dict, st):
 	n = len(st)
@@ -194,17 +194,22 @@ def fill_length_1_cells_d(table, rule_dict, st):
 		for lhs in rule_dict: # lhs is a single variable
 			if st[i] in rule_dict[lhs]:
 			   # add variable lhs to T[i][i+1]
-			   table[i][i+1].add(lhs)
+			   table[i][i+1][0].add(lhs)
+		table[i][i+1][1] = 1
 
 
 def fill_cell_d(table, i, j, rule_dict):
 	for k in range(i+1, j): # non trivial partitions of s[i:j]
 		for lhs in rule_dict: # lhs is a single variable
 			for rhs in rule_dict[lhs]:
-			   if len(rhs) == 2: # rule like A -> XY (not like A -> a)
-				   X, Y = rhs[0], rhs[1]
-				   if X in table[i][k] and Y in table[k][j]:
-					   table[i][j].add(lhs)
+				if len(rhs) == 2: # rule like A -> XY (not like A -> a)
+					X, Y = rhs[0], rhs[1]
+					if X in table[i][k][0] and Y in table[k][j][0]:
+						table[i][j][0].add(lhs)
+						if table[i][j][1] == "none":
+							table[i][j][1] = max(1+table[i][k][1],1+table[k][j][1])
+						else:
+							table[i][j][1] = min(table[i][j][1], max(1+table[i][k][1],1+table[k][j][1]))
 
 
 ########
@@ -315,10 +320,7 @@ def test():
 	# Q6 c
 	rule_dict = {"S": {"AB", "BC"}, "A": {"BA", "a"}, "B": {"CC", "b"}, "C": {"AB", "a"}}
 	if CYK_d("baaba", rule_dict, "S") != 4:
-		print("Error in CYK_d")
-	if CYK_d("baab", rule_dict, "S") != -1:
-		print("Error in CYK_d")
-	
-	print ("hhh")
+		print("Error in CYK_d1")
 
-test()
+	if CYK_d("baab", rule_dict, "S") != -1:
+		print("Error in CYK_d2")

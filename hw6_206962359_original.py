@@ -172,7 +172,7 @@ def CYK_d(st, rule_dict, start_var):
 	#Initialize the relevant triangular region with empty sets
 	for i in range(n):
 		for j in range(i+1,n+1):
-			table[i][j] = dict()
+			table[i][j] = [set(), "none"]
 
 	# Fill the table cells representing substrings of length 1
 	fill_length_1_cells_d(table, rule_dict, st)
@@ -182,12 +182,11 @@ def CYK_d(st, rule_dict, start_var):
 		for i in range(0, n-length+1):
 			j = i+length
 			fill_cell_d(table, i,j, rule_dict)
-
-	###
-	if (start_var in table[0][n]) == False:
+			
+	if (start_var in table[0][n][0]) == False:
 		return -1
 	else:
-		return table[0][n][start_var]
+		return table[0][n][1]
 
 def fill_length_1_cells_d(table, rule_dict, st):
 	n = len(st)
@@ -195,7 +194,8 @@ def fill_length_1_cells_d(table, rule_dict, st):
 		for lhs in rule_dict: # lhs is a single variable
 			if st[i] in rule_dict[lhs]:
 			   # add variable lhs to T[i][i+1]
-			   table[i][i+1][lhs] = 1
+			   table[i][i+1][0].add(lhs)
+		table[i][i+1][1] = 1
 
 
 def fill_cell_d(table, i, j, rule_dict):
@@ -204,8 +204,12 @@ def fill_cell_d(table, i, j, rule_dict):
 			for rhs in rule_dict[lhs]:
 				if len(rhs) == 2: # rule like A -> XY (not like A -> a)
 					X, Y = rhs[0], rhs[1]
-					if X in table[i][k] and Y in table[k][j]:
-						table[i][j][lhs] = max(1+table[i][k][X], 1+table[k][j][Y])
+					if X in table[i][k][0] and Y in table[k][j][0]:
+						table[i][j][0].add(lhs)
+						if table[i][j][1] == "none":
+							table[i][j][1] = max(1+table[i][k][1],1+table[k][j][1])
+						else:
+							table[i][j][1] = min(table[i][j][1], max(1+table[i][k][1],1+table[k][j][1]))
 
 
 ########
@@ -320,66 +324,4 @@ def test():
 
 	if CYK_d("baab", rule_dict, "S") != -1:
 		print("Error in CYK_d2")
-	
-test()
-
-rule_dict1 = {"S":{"AB","BC"},"A":{"BA", "a"},"B" :{"CC", "b"}, "C":{"AB", "a"}}
-rule_dict2 = {"S":{"AB","BC"},"A":{"BA"},"B" :{"CC", "b"}, "C":{"AB"}}
-rule_dict3 = {"S":{"AB","BC"},"A":{"BA", "a","c"},"B" :{"CC", "b"}, "C":{"AB", "a","c"}}
-rule_dict4 = {"S": {"AB", "BC", "DB"}, "A": {"BA", "DB", "a", "c"} ,"B": {"CC", "b"}, "C": {"AB", "a", "c"},"D": {"d", "AD", "BA", "DC"}}
-rule_dict5 = {"S": {"AB", "BC", "DB"}, "A": {"BA", "DB", "a", "c"} ,"B": {"CC", "b","CH"}, "C": {"AB", "a", "c","HH"},"D": {"d", "AD", "BA", "DC"}, "H":{"h","DD"}}
-rule_dict6 = {"%": {"CB", "BC", "DB","HH"} ,"B": {"CC", "b","CH"}, "C": {"CB", "a", "c","HH"},"D": {"d", "HD", "BD", "DC"}, "H":{"h","DD"}}
-
-
-"""
-bitches:
-if (CYK_d("baabaaababab",rule_dict1,"S") != 6): 
-	print ("hi")
-if (CYK_d("acbbcbcc",rule_dict3,"S") != 7): 
-	print ("hi")
-if (CYK_d("abab", rule_dict4, "S") != 4) :
-	print (CYK_d("abab", rule_dict4, "S"))
-if ((CYK_d("cc", rule_dict4, "S")) == (CYK_d("dc", rule_dict4, "S")) == (CYK_d("dddddd", rule_dict4, "S")) == (CYK_d("abd", rule_dict4, "S")) == -1):
-	print ("hi")
-"""
-if (CYK_d("abab", rule_dict4, "S") != 4):
-	print("bitch its:", CYK_d("abab", rule_dict4, "S"))
-
-"""
-if (CYK_d("hhhhh", rule_dict5, "S") == 4) == (CYK_d("abchdhdhhhddd", rule_dict5, "S") == 11) == (CYK_d("abcabc", rule_dict5, "S") == 4) == \
-						(CYK_d("dddhhhccc", rule_dict5, "S") == 5) == ((CYK_d("h", rule_dict5, "S")) == (CYK_d("abc", rule_dict5, "S")) == CYK_d("cc", rule_dict5, "S")\
-							== (CYK_d("abcdhhdb", rule_dict5, "S")) == -1) == (CYK_d("hh", rule_dict6, "%") == 2) == (CYK_d("abcdhdhahdhhdd", rule_dict6, "%") == 7) ==\
-								(CYK_d("cchh", rule_dict6, "%") == 3) == (CYK_d("abcdhhdb", rule_dict6, "%") == 7) == ((CYK_d("h", rule_dict6, "%")) == (CYK_d("abcdhdhahd", rule_dict6, "%"))\
-									== (CYK_d("abdhhchab", rule_dict6, "%")) == CYK_d("aaaaaaah", rule_dict6, "%") == -1):
-	print("'CYK' is working")
-else:
-	print("problem with CYK!!!")
-"""
-
-
-
-"""
-rule_dict1 = {"S": {"AB", "BC"}, "A": {"BA", "a"}, "B": {"CC", "b"}, "C": {"AB", "a"}}
-rule_dict2 = {"S": {"AB", "BC"}, "A": {"BA"}, "B": {"CC", "b"}, "C": {"AB"}}
-rule_dict3 = {"S": {"AB", "BC"}, "A": {"BA", "a", "c"}, "B" : {"CC", "b"}, "C": {"AB", "a","c"}}
-rule_dict4 = {"S": {"AB", "BC", "DB"}, "A": {"BA", "DB", "a", "c"}, "B": {
-	"CC", "b"}, "C": {"AB", "a", "c"}, "D": {"d", "AD", "BA", "DC"}}
-rule_dict5 = {"S": {"AB", "BC", "DB"}, "A": {"BA", "DB", "a", "c"}, "B": {
-	"CC", "b", "CH"}, "C": {"AB", "a", "c", "HH"}, "D": {"d", "AD", "BA", "DC"}, "H": {"h", "DD"}}
-rule_dict6 = {"%": {"CB", "BC", "DB", "HH"}, "B": {"CC", "b", "CH"}, "C": {
-	"CB", "a", "c", "HH"}, "D": {"d", "HD", "BD", "DC"}, "H": {"h", "DD"}}
-
-if (CYK_d("baaba", rule_dict1, "S") == 4) == (CYK_d("baab", rule_dict1, "S") == -1) == (CYK_d("b", rule_dict1, "S") == -1) == (CYK_d("a", rule_dict2, "S") == -1)\
-    == (CYK_d("b", rule_dict2, "S") == -1) == (CYK_d("baabaaababab", rule_dict1, "S") == 6) == (CYK_d("bbb", rule_dict1, "S") == -1) == (CYK_d("cccac", rule_dict3, "S") == 4)\
-        == (CYK_d("acbbcbcc", rule_dict3, "S") == 7) == (CYK_d("cc", rule_dict3, "S") == -1) == (CYK_d("abcabc", rule_dict3, "S") == -1) == (CYK_d("abcdabc", rule_dict4, "S") == 5)\
-    == (CYK_d("abcabc", rule_dict4, "S") == 4) == (CYK_d("abab", rule_dict4, "S") == 4) == (CYK_d("ab", rule_dict4, "S") == 2) == \
-    ((CYK_d("cc", rule_dict4, "S")) == (CYK_d("dc", rule_dict4, "S")) == (CYK_d("dddddd", rule_dict4, "S")) == (CYK_d("abd", rule_dict4, "S")) == -1)\
-    == (CYK_d("hhhhh", rule_dict5, "S") == 4) == (CYK_d("abchdhdhhhddd", rule_dict5, "S") == 11) == (CYK_d("abcabc", rule_dict5, "S") == 4) == \
-    (CYK_d("dddhhhccc", rule_dict5, "S") == 5) == ((CYK_d("h", rule_dict5, "S")) == (CYK_d("abc", rule_dict5, "S")) == CYK_d("cc", rule_dict5, "S")
-                                                   == (CYK_d("abcdhhdb", rule_dict5, "S")) == -1) == (CYK_d("hh", rule_dict6, "%") == 2) == (CYK_d("abcdhdhahdhhdd", rule_dict6, "%") == 7) ==\
-    (CYK_d("cchh", rule_dict6, "%") == 3) == (CYK_d("abcdhhdb", rule_dict6, "%") == 7) == ((CYK_d("h", rule_dict6, "%")) == (CYK_d("abcdhdhahd", rule_dict6, "%"))
-                                                                                           == (CYK_d("abdhhchab", rule_dict6, "%")) == CYK_d("aaaaaaah", rule_dict6, "%") == -1):
-    print("'CYK' is working")
-else:
-    print("problem with CYK!!!")
-"""
+		
